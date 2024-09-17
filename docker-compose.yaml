@@ -1,0 +1,33 @@
+version: "3"
+services:
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "34289:34289"
+    environment:
+      # OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4318"
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${URL}
+      # OTEL_EXPORTER_OTLP_HEADERS: "Authorization=Api-Token%20${TOKEN}"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
+      OTEL_SERVICE_NAME: "server"
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    depends_on:
+      - server
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${URL}
+      # OTEL_EXPORTER_OTLP_HEADERS: "Authorization=Api-Token%20${TOKEN}"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
+      OTEL_SERVICE_NAME: "client"
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "16686:16686" # Jaeger UI
+      - "4317:4317" # OTLP gRPC
+      - "4318:4318" # OTLP HTTP
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
